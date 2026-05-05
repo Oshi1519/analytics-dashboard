@@ -1,6 +1,7 @@
 'use client'
 import { UserButton } from '@clerk/nextjs'
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 
 interface Project {
   id: string
@@ -15,6 +16,7 @@ export default function DashboardPage() {
   const [name, setName] = useState('')
   const [domain, setDomain] = useState('')
   const [loading, setLoading] = useState(false)
+  const router = useRouter()
 
   useEffect(() => {
     fetchProjects()
@@ -194,11 +196,17 @@ export default function DashboardPage() {
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1rem' }}>
             {projects.map(project => (
-              <div key={project.id} style={{
-                background: 'white', border: '1px solid rgba(26,23,20,0.1)',
-                borderRadius: '6px', padding: '1.5rem',
-                cursor: 'pointer', transition: 'box-shadow 0.2s'
-              }}>
+              <div
+                key={project.id}
+                onClick={() => router.push(`/dashboard/${project.id}`)}
+                style={{
+                  background: 'white', border: '1px solid rgba(26,23,20,0.1)',
+                  borderRadius: '6px', padding: '1.5rem',
+                  cursor: 'pointer', transition: 'box-shadow 0.2s'
+                }}
+                onMouseEnter={e => (e.currentTarget.style.boxShadow = '0 4px 20px rgba(26,23,20,0.1)')}
+                onMouseLeave={e => (e.currentTarget.style.boxShadow = 'none')}
+              >
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
                   <div style={{
                     width: '36px', height: '36px', background: '#F5F0E8',
