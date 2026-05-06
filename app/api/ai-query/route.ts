@@ -47,16 +47,11 @@ export async function POST(req: Request) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-          thinkingConfig: { thinkingBudget: 0 }
-        }
+        contents: [{ parts: [{ text: prompt }] }]
       })
     })
 
     const data = await geminiRes.json()
-    console.log('Gemini status:', geminiRes.status)
-    console.log('Gemini response:', JSON.stringify(data, null, 2))
 
     const parts = data?.candidates?.[0]?.content?.parts || []
     const answer = parts
