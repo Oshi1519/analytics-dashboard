@@ -3,8 +3,8 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { UserButton } from '@clerk/nextjs'
 import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid,
-  Tooltip, ResponsiveContainer, BarChart, Bar
+  BarChart, Bar, XAxis, YAxis, CartesianGrid,
+  Tooltip, ResponsiveContainer
 } from 'recharts'
 
 interface Project {
@@ -30,6 +30,9 @@ export default function ProjectPage() {
   const [stats, setStats] = useState<Stats | null>(null)
   const [copied, setCopied] = useState(false)
   const [activeTab, setActiveTab] = useState<'overview' | 'snippet' | 'events'>('overview')
+  const [aiQuestion, setAiQuestion] = useState('')
+  const [aiAnswer, setAiAnswer] = useState('')
+  const [aiLoading, setAiLoading] = useState(false)
 
   useEffect(() => {
     fetch('/api/projects')
@@ -43,6 +46,20 @@ export default function ProjectPage() {
       .then(r => r.json())
       .then(data => setStats(data))
   }, [projectId])
+
+  async function askAI() {
+    if (!aiQuestion) return
+    setAiLoading(true)
+    setAiAnswer('')
+    const res = await fetch('/api/ai-query', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question: aiQuestion, projectId })
+    })
+    const data = await res.json()
+    setAiAnswer(data.answer || 'Could not get an answer.')
+    setAiLoading(false)
+  }
 
   const snippet = `<!-- Insightly Analytics -->
 <script>
@@ -78,7 +95,7 @@ export default function ProjectPage() {
     border: 'none',
     cursor: 'pointer',
     fontSize: '0.85rem',
-    fontWeight: '500',
+    fontWeight: '500' as const,
     background: activeTab === tab ? '#1A1714' : 'transparent',
     color: activeTab === tab ? '#F5F0E8' : '#8C8580',
     transition: 'all 0.2s'
@@ -183,9 +200,79 @@ export default function ProjectPage() {
               )}
             </div>
 
+            {/* AI Query Box */}
+            <div style={{
+              background: 'white', border: '1px solid rgba(26,23,20,0.1)',
+              borderRadius: '6px', padding: '1.5rem', marginBottom: '1.5rem'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
+                <span style={{ fontSize: '1.2rem' }}>🤖</span>
+                <h2 style={{ fontFamily: 'Georgia, serif', fontSize: '1.1rem', color: '#1A1714' }}>
+                  Ask AI about your data
+                </h2>
+              </div>
+              <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1rem' }}>
+                <input
+                  type="text"
+                  placeholder='e.g. "Which page got most visits?" or "How many clicks today?"'
+                  value={aiQuestion}
+                  onChange={e => setAiQuestion(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && askAI()}
+                  style={{
+                    flex: 1, padding: '0.75rem', border: '1px solid rgba(26,23,20,0.2)',
+                    borderRadius: '4px', fontSize: '0.9rem', outline: 'none', fontFamily: 'inherit'
+                  }}
+                />
+                <button
+                  onClick={askAI}
+                  disabled={aiLoading || !aiQuestion}
+                  style={{
+                    background: aiLoading ? '#8C8580' : '#C8602A', color: 'white',
+                    border: 'none', padding: '0.75rem 1.5rem', borderRadius: '4px',
+                    fontSize: '0.85rem', fontWeight: '500', cursor: aiLoading ? 'not-allowed' : 'pointer',
+                    whiteSpace: 'nowrap'
+                  }}>
+                  {aiLoading ? 'Thinking...' : 'Ask AI'}
+                </button>
+              </div>
+              {/* Quick questions */}
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: aiAnswer ? '1rem' : '0' }}>
+                {[
+                  'Which page is most popular?',
+                  'How many events today?',
+                  'What do users click most?'
+                ].map(q => (
+                  <button
+                    key={q}
+                    onClick={() => setAiQuestion(q)}
+                    style={{
+                      background: '#F5F0E8', border: '1px solid rgba(26,23,20,0.1)',
+                      borderRadius: '99px', padding: '4px 12px', fontSize: '0.75rem',
+                      cursor: 'pointer', color: '#8C8580'
+                    }}>
+                    {q}
+                  </button>
+                ))}
+              </div>
+              {/* AI Answer */}
+              {aiAnswer && (
+                <div style={{
+                  background: 'linear-gradient(135deg, rgba(200,96,42,0.06), rgba(200,96,42,0.02))',
+                  border: '1px solid rgba(200,96,42,0.2)', borderRadius: '6px', padding: '1rem',
+                  marginTop: '1rem'
+                }}>
+                  <div style={{ fontSize: '0.7rem', color: '#C8602A', fontWeight: '600', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    ✦ AI Answer
+                  </div>
+                  <div style={{ fontSize: '0.9rem', color: '#1A1714', lineHeight: '1.6' }}>
+                    {aiAnswer}
+                  </div>
+                </div>
+              )}
+            </div>
+
             {/* Top Pages + Recent Events */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-
               {/* Top Pages */}
               <div style={{ background: 'white', border: '1px solid rgba(26,23,20,0.1)', borderRadius: '6px', padding: '1.5rem' }}>
                 <h2 style={{ fontFamily: 'Georgia, serif', fontSize: '1.1rem', color: '#1A1714', marginBottom: '1rem' }}>
@@ -270,7 +357,6 @@ export default function ProjectPage() {
                 {snippet}
               </pre>
             </div>
-            {/* Instructions */}
             <div style={{ padding: '1.5rem' }}>
               <h3 style={{ fontFamily: 'Georgia, serif', fontSize: '1rem', color: '#1A1714', marginBottom: '1rem' }}>How to install</h3>
               {[
