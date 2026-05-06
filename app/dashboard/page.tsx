@@ -65,7 +65,7 @@ export default function DashboardPage() {
         }}>
           Insight<span style={{ color: '#C8602A', fontStyle: 'italic' }}>ly</span>
         </span>
-        <UserButton afterSignOutUrl="/" />
+        <UserButton />
       </nav>
 
       <div style={{ padding: '3rem 2rem', maxWidth: '1100px', margin: '0 auto' }}>

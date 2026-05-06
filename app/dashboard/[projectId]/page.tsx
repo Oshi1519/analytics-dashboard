@@ -124,7 +124,7 @@ export default function ProjectPage() {
             {project.name}
           </span>
         </div>
-        <UserButton afterSignOutUrl="/" />
+        <UserButton />
       </nav>
 
       <div style={{ padding: '2.5rem 2rem', maxWidth: '1100px', margin: '0 auto' }}>
